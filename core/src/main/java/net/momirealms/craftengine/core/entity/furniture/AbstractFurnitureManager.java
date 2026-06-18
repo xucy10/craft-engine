@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
@@ -155,9 +156,9 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                 this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
         }
         if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(() -> {
-                CraftEngine.instance().scheduler().async().execute(this::asyncTick);
-            }, 1, 1);
+            // Folia: 直接在异步调度器上运行，避免 GlobalRegionScheduler 空转阻塞
+            // Folia: run directly on async scheduler to avoid GlobalRegionScheduler idle blocking
+            this.asyncTickTask = CraftEngine.instance().scheduler().asyncRepeating(this::asyncTick, 50, 50, TimeUnit.MILLISECONDS);
     }
 
     @Override

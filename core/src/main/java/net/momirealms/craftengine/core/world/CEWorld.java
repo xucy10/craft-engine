@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class CEWorld {
@@ -62,11 +63,9 @@ public abstract class CEWorld {
     public void setTicking(boolean ticking) {
         if (ticking) {
             if (this.syncTickTask == null || this.syncTickTask.cancelled())
-                this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
+                this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1, this.world, 0, 0);
             if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-                this.asyncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(() -> {
-                    CraftEngine.instance().scheduler().async().execute(this::asyncTick);
-                }, 1, 1);
+                this.asyncTickTask = CraftEngine.instance().scheduler().asyncRepeating(this::asyncTick, 50, 50, TimeUnit.MILLISECONDS);
         } else {
             if (this.syncTickTask != null && !this.syncTickTask.cancelled())
                 this.syncTickTask.cancel();

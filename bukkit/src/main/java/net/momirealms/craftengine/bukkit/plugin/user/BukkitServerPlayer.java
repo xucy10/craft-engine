@@ -236,6 +236,8 @@ public class BukkitServerPlayer extends Player {
     // 是否正在模拟客户端可能缺失的交互逻辑
     // 比如客户端觉得音符盒可以交互，但实际上不可，导致副手的交互包并未发出，最终导致副手的物品逻辑不执行
     private boolean isSimulatingInteraction;
+    // Folia tick 任务引用 (用于 quit 时取消) / Folia tick task reference (for cancellation on quit)
+    private net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask foliaTickTask;
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, @Nullable Channel channel) {
         this.channel = channel;
@@ -250,6 +252,17 @@ public class BukkitServerPlayer extends Player {
             }
         }
         this.culling = new EntityCulling(this);
+    }
+
+    public void setFoliaTickTask(net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask task) {
+        this.foliaTickTask = task;
+    }
+
+    public void cancelFoliaTickTask() {
+        if (this.foliaTickTask != null && !this.foliaTickTask.cancelled()) {
+            this.foliaTickTask.cancel();
+        }
+        this.foliaTickTask = null;
     }
 
     public void setPlayer(org.bukkit.entity.Player player) {

@@ -499,7 +499,9 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             this.resetUserArray();
             // folia在此tick每个玩家
             if (VersionHelper.isFolia) {
-                player.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> user.tick(), null, 1, 1);
+                net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask tickTask =
+                        player.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> user.tick(), () -> user.cancelFoliaTickTask(), 1, 1);
+                user.setFoliaTickTask(tickTask);
             }
             // 发送修复图腾音效
             user.sendPacket(TotemAnimationCommand.FIX_TOTEM_SOUND_PACKET, false);
@@ -528,6 +530,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         BukkitServerPlayer serverPlayer = this.onlineUsers.remove(player.getUniqueId());
         if (serverPlayer != null) {
             this.resetUserArray();
+            // Folia: 取消玩家的 tick 任务，防止孤立任务泄漏
+            // Folia: cancel the player's tick task to prevent orphaned task leaks
+            if (VersionHelper.isFolia) {
+                serverPlayer.cancelFoliaTickTask();
+            }
             this.saveCooldown(player, serverPlayer.cooldown());
         }
     }
