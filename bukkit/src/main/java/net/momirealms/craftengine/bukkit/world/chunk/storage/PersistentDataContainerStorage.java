@@ -79,7 +79,14 @@ public class PersistentDataContainerStorage implements WorldDataStorage {
     @Override
     public @Nullable CompoundTag readChunkTagAt(@NotNull ChunkPos pos) throws IOException {
         org.bukkit.World bukkitWorld = (org.bukkit.World) this.world.platformWorld();
-        PersistentDataContainer pdc = bukkitWorld.getChunkAt(pos.x, pos.z).getPersistentDataContainer();
+        // Folia: 检查区块是否已加载，避免同步阻塞区域线程
+        // Folia: check if chunk is loaded to avoid blocking the region thread
+        if (!bukkitWorld.isChunkLoaded(pos.x, pos.z)) {
+            return null;
+        }
+        org.bukkit.Chunk chunk = bukkitWorld.getChunkAt(pos.x, pos.z);
+        if (chunk == null) return null;
+        PersistentDataContainer pdc = chunk.getPersistentDataContainer();
         byte[] bytes = pdc.get(CHUNK_KEY, PersistentDataType.BYTE_ARRAY);
         if (bytes == null) {
             return null;
@@ -92,7 +99,14 @@ public class PersistentDataContainerStorage implements WorldDataStorage {
     @Override
     public void writeChunkTagAt(@NotNull ChunkPos pos, @Nullable CompoundTag nbt) throws IOException {
         org.bukkit.World bukkitWorld = (org.bukkit.World) this.world.platformWorld();
-        PersistentDataContainer pdc = bukkitWorld.getChunkAt(pos.x, pos.z).getPersistentDataContainer();
+        // Folia: 检查区块是否已加载，避免同步阻塞区域线程
+        // Folia: check if chunk is loaded to avoid blocking the region thread
+        if (!bukkitWorld.isChunkLoaded(pos.x, pos.z)) {
+            return;
+        }
+        org.bukkit.Chunk chunk = bukkitWorld.getChunkAt(pos.x, pos.z);
+        if (chunk == null) return;
+        PersistentDataContainer pdc = chunk.getPersistentDataContainer();
         setPdc(pdc, nbt);
     }
 
